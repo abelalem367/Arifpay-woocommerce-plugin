@@ -1,0 +1,98 @@
+// global $woocommerce;
+           // $order = new WC_Order( $order_id );
+
+            // $my_bank_details = $this->Bank_Details;
+            // // Get cart items and bank details
+            // $cart_items = $woocommerce->cart->get_cart();
+            // $tx_ref = urlencode($this->invoice_prefix . $order_id);
+            // $amount = urlencode($order->get_total());
+            // Prepare the items and beneficiaries for the request body
+            // $items = array();
+            // $total_amount = 0;
+            // foreach ( $cart_items as $cart_item ) {
+            //     $product = $cart_item['data'];
+            //     $items[] = array(
+                    
+            //         'name' => $product->get_name(),
+            //         'quantity' => $cart_item['quantity'],
+            //         'price' => $product->get_price(),
+            //         'description' => $product->get_description(),
+            //         'image' => wp_get_attachment_url( $product->get_image_id() )
+            //     );
+            //     $total_amount += $product->get_price() * $cart_item['quantity'];
+            // }
+        
+            // $beneficiaries = array();
+            // foreach ( $my_bank_details as $bank_detail ) {
+            //     $beneficiaries[] = array(
+            //         'accountNumber' => $bank_detail['account_number'],
+            //         'bank' => 'AWINETAA',
+            //         'amount' => $order->get_total()
+            //     );
+            // }
+        
+            // Prepare the request body
+            
+            $request_body = array(
+                'items' => array(array(
+                        "name" => "banana",
+                        "quantity" => 1,
+                        "price" => 1,
+                        "description" => "Fresh Corner preimuim Banana.",
+                        "image" => "https://4.imimg.com/data4/KK/KK/GLADMIN-/product-8789_bananas_golden-500x500.jpg"
+                        )
+                    
+                ),
+                'beneficiaries' => array(array(
+                    'accountNumber' => "01320811436100",
+                    'bank' => 'AWINETAA',
+                    'amount' => 2.0
+                )),
+                'cancelUrl' => "https://example.com",
+                'errorUrl' => "https://error.com",
+                'notifyUrl' => "https://gateway.arifpay.net/test/callback",
+                'successUrl' => "https://example.com",
+               // 'expireDate' => date('Y-m-d', strtotime('+1 day')),
+                'paymentMethods' => array(
+                    "TELEBIRR"
+                ),
+                "expireDate" => "2025-02-01T03:45:27",
+                "lang" => "EN",
+                "nonce" => "t4"
+            );
+                    
+            // Send a request to the endpoint
+            
+            $response = wp_remote_post('https://gateway.arifpay.org/api/sandbox/checkout/session', array(
+                'method' => 'POST',
+                'headers' => array(
+                    'Content-Type' => 'application/json',
+                    'x-arifpay-key' => 'sLsEIpXu6btF1Y4ZpjVSwCIotuW4qQqM' // replace with your merchant API key
+                ),
+                'body' => json_encode( $request_body ),
+            ));
+        
+            if ( is_wp_error( $response ) ) {
+                
+                wc_add_notice( 'Payment error: ' . $response->get_error_message(), 'error' );
+                return array(
+                    'result' => 'fail',
+                    'redirect' => 'https://example.com'
+                );
+            }
+        
+            $response_body = json_decode( wp_remote_retrieve_body( $response ), true );
+        
+            // Retrieve the paymentUrl and redirect the user
+            if ( isset( $response_body['paymentUrl'] ) ) {
+                return array(
+                    'result' => 'success',
+                    'redirect' => 'https://example.com'
+                );
+            } else {
+               
+                return array(
+                    'result' => 'fail',
+                    'redirect' => 'https://example.com'
+                );
+            }
